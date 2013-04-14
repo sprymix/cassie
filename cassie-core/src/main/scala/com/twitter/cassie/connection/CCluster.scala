@@ -19,7 +19,7 @@ import com.twitter.finagle.ServiceFactory
 import java.net.SocketAddress
 
 trait CCluster[T] extends FCluster[T] {
-  def close
+  def close() = ()
 }
 
 /**
@@ -27,5 +27,5 @@ trait CCluster[T] extends FCluster[T] {
  */
 class SocketAddressCluster(private[this] val underlying: Seq[SocketAddress])
   extends FStaticCluster[SocketAddress](underlying) with CCluster[SocketAddress] {
-  def close() = ()
+  override def close() = ()
 }

@@ -28,7 +28,7 @@ import scala.collection.JavaConversions
 
 class ZookeeperServerSetCCluster(serverSet: ServerSet)
   extends ZookeeperServerSetCluster(serverSet) with CCluster[SocketAddress] {
-  def close {}
+  override def close {}
 }
 
 /**

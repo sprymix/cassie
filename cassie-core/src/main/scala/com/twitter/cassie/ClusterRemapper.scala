@@ -84,7 +84,9 @@ private class ClusterRemapper(
     changes = newTail
   }
 
-  def close = timer.stop()
+  override def close() = {
+    timer.stop()
+  }
 
   def snap: (Seq[SocketAddress], Future[Spool[FCluster.Change[SocketAddress]]]) = (hosts, changes)
 
