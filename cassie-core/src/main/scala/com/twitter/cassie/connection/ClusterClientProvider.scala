@@ -97,7 +97,7 @@ private[cassie] class ClusterClientProvider(
     .reportTo(statsReceiver)
     .tracer(tracer)
     .hostConnectionMaxWaiters(hostConnectionMaxWaiters)
-    .expFailFast(failFast)
+    .failFast(failFast)
     .build()
 
   private val client = new ServiceToClient(service, new TBinaryProtocol.Factory())
@@ -106,7 +106,7 @@ private[cassie] class ClusterClientProvider(
 
   override def close(): Unit = {
     hosts.close
-    service.release()
+    service.close()
     ()
   }
 
