@@ -48,7 +48,7 @@ class ZookeeperServerSetCCluster(serverSet: ServerSet)
  * @param serverSet zookeeper ServerSet
  * @param stats a finagle stats receiver
  */
-class ServerSetsCluster(serverSet: ServerSet, stats: StatsReceiver, tracer: Tracer.Factory) extends ClusterBase {
+class ServerSetsCluster(serverSet: ServerSet, stats: StatsReceiver, tracer: Tracer) extends ClusterBase {
 
   private class NoOpMonitor extends HostChangeMonitor[ServiceInstance]  {
     override def onChange(hostSet: ImmutableSet[ServiceInstance]) = {}
@@ -61,11 +61,11 @@ class ServerSetsCluster(serverSet: ServerSet, stats: StatsReceiver, tracer: Trac
    * @param zkPath path to node where Cassandra hosts will exist under
    * @param stats a finagle stats receiver
    */
-  def this(zkClient: ZooKeeperClient, zkPath: String, stats: StatsReceiver, tracer: Tracer.Factory) =
+  def this(zkClient: ZooKeeperClient, zkPath: String, stats: StatsReceiver, tracer: Tracer) =
     this(new ServerSetImpl(zkClient, zkPath), stats, tracer)
 
-  def this(zkClient: ZooKeeperClient, zkPath: String, stats: StatsReceiver) = 
-    this(zkClient, zkPath, stats, NullTracer.factory)
+  def this(zkClient: ZooKeeperClient, zkPath: String, stats: StatsReceiver) =
+    this(zkClient, zkPath, stats, NullTracer)
 
   /**
    * Convenience constructor that creates a ZooKeeperClient using the specified hosts and timeout.
@@ -78,7 +78,7 @@ class ServerSetsCluster(serverSet: ServerSet, stats: StatsReceiver, tracer: Trac
   def this(zkAddresses: Iterable[InetSocketAddress], zkPath: String, timeoutMillis: Int,
     stats: StatsReceiver = NullStatsReceiver) =
     this(new ZooKeeperClient(Amount.of(timeoutMillis, Time.MILLISECONDS),
-      JavaConversions.asJavaIterable(zkAddresses)), zkPath, stats, NullTracer.factory)
+      JavaConversions.asJavaIterable(zkAddresses)), zkPath, stats, NullTracer)
 
   /**
    * Returns a  [[com.twitter.cassie.KeyspaceBuilder]] instance.

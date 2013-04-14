@@ -31,8 +31,12 @@ import scala.collection.JavaConversions._
  *        to refresh its host list.
  * @param stats a finagle stats receiver
  */
-class Cluster(seedHosts: Set[String], seedPort: Int, stats: StatsReceiver, tracer: Tracer.Factory) extends ClusterBase {
+class Cluster(seedHosts: Set[String], seedPort: Int, stats: StatsReceiver, tracer: Tracer) extends ClusterBase {
   private var mapHostsEvery: Duration = 10.minutes
+
+  @deprecated("Use Tracer instead of Tracer.Factory", "0.26.0")
+  def this(seedHosts: Set[String], seedPort: Int, stats: StatsReceiver, tracer: Tracer.Factory) =
+    this(seedHosts, seedPort, stats, tracer())
 
   /**
    * @param seedHosts A comma separated list of seed hosts for a cluster. The rest of the
@@ -40,20 +44,20 @@ class Cluster(seedHosts: Set[String], seedPort: Int, stats: StatsReceiver, trace
    *                  The port number is assumed to be 9160.
    */
   def this(seedHosts: String, stats: StatsReceiver = NullStatsReceiver) =
-    this(seedHosts.split(',').filter { !_.isEmpty }.toSet, 9160, stats, NullTracer.factory)
+    this(seedHosts.split(',').filter { !_.isEmpty }.toSet, 9160, stats, NullTracer)
 
   /**
    * @param seedHosts A comma separated list of seed hosts for a cluster. The rest of the
    *                  hosts can be found via mapping the cluser. See KeyspaceBuilder.mapHostsEvery.
    */
   def this(seedHosts: String, port: Int) =
-    this(seedHosts.split(',').filter { !_.isEmpty }.toSet, port, NullStatsReceiver, NullTracer.factory)
+    this(seedHosts.split(',').filter { !_.isEmpty }.toSet, port, NullStatsReceiver, NullTracer)
 
   /**
    * @param seedHosts A collection of seed host addresses. The port number is assumed to be 9160
    */
   def this(seedHosts: java.util.Collection[String]) =
-    this(collectionAsScalaIterable(seedHosts).toSet, 9160, NullStatsReceiver, NullTracer.factory)
+    this(collectionAsScalaIterable(seedHosts).toSet, 9160, NullStatsReceiver, NullTracer)
 
   /**
    * Returns a  [[com.twitter.cassie.KeyspaceBuilder]] instance.
@@ -99,7 +103,7 @@ case class KeyspaceBuilder(
   cluster: CCluster[SocketAddress],
   name: String,
   stats: StatsReceiver,
-  tracer: Tracer.Factory,
+  tracer: Tracer,
   _retries: Int = 0,
   _timeout: Int = 5000,
   _requestTimeout: Int = 1000,
@@ -170,7 +174,7 @@ case class KeyspaceBuilder(
   def reportStatsTo(r: StatsReceiver): KeyspaceBuilder = copy(stats = r)
 
   /** Set a tracer to collect request traces. */
-  def tracerFactory(t: Tracer.Factory): KeyspaceBuilder = copy(tracer = t)
+  def tracer(t: Tracer): KeyspaceBuilder = copy(tracer = t)
 
   def hostConnectionMaxWaiters(i: Int): KeyspaceBuilder = copy(_hostConnectionMaxWaiters = i)
 }

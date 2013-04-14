@@ -43,7 +43,7 @@ class FakeCassandraTest extends FunSpec with MustMatchers with BeforeAndAfterAll
     server = factory()
     server.start()
     Thread.sleep(100)
-    client = new Cluster(Set("localhost"), server.port.get, NullStatsReceiver, NullTracer.factory)
+    client = new Cluster(Set("localhost"), server.port.get, NullStatsReceiver, NullTracer)
   }
 
   def keyspace() = {

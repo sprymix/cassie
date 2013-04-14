@@ -47,7 +47,7 @@ private class ClusterRemapper(
   remapPeriod: Duration,
   port: Int = 9160,
   statsReceiver: StatsReceiver,
-  tracerFactory: Tracer.Factory
+  tracer: Tracer
 ) extends CCluster[SocketAddress] {
   import ClusterRemapper._
 
@@ -100,7 +100,7 @@ private class ClusterRemapper(
       maxConnectionsPerHost = 1,
       hostConnectionMaxWaiters = 100,
       statsReceiver = statsReceiver,
-      tracerFactory = tracerFactory,
+      tracer = tracer,
       retryPolicy = RetryPolicy.Idempotent
     )
     ccp map {

@@ -19,7 +19,7 @@ import com.twitter.finagle.ServiceFactory
 import com.twitter.finagle.service.{ Backoff, RetryPolicy => FinagleRetryPolicy }
 import com.twitter.finagle.stats.StatsReceiver
 import com.twitter.finagle.thrift.{ ThriftClientRequest, ThriftClientFramedCodec }
-import com.twitter.finagle.tracing.Tracer
+import com.twitter.finagle.tracing.{Tracer, DefaultTracer}
 import com.twitter.finagle.{ ChannelException, CodecFactory, ClientCodecConfig, RequestTimeoutException, WriteException }
 import com.twitter.util.{ Duration, Future, Throw, Timer, TimerTask, Time, Try }
 import java.net.SocketAddress
@@ -46,7 +46,7 @@ private[cassie] class ClusterClientProvider(
   val maxConnectionsPerHost: Int,
   val hostConnectionMaxWaiters: Int,
   val statsReceiver: StatsReceiver,
-  val tracerFactory: Tracer.Factory,
+  val tracer: Tracer,
   val retryPolicy: RetryPolicy = RetryPolicy.Idempotent,
   val failFast: Boolean = true
 ) extends ClientProvider {
@@ -95,7 +95,7 @@ private[cassie] class ClusterClientProvider(
     .hostConnectionCoresize(minConnectionsPerHost)
     .hostConnectionLimit(maxConnectionsPerHost)
     .reportTo(statsReceiver)
-    .tracerFactory(tracerFactory)
+    .tracer(tracer)
     .hostConnectionMaxWaiters(hostConnectionMaxWaiters)
     .expFailFast(failFast)
     .build()
