@@ -17,7 +17,7 @@ package com.twitter.cassie.tests
 import com.twitter.cassie.codecs.Utf8Codec
 import com.twitter.cassie.util.ColumnFamilyTestHelper
 import com.twitter.cassie._
-import com.twitter.util.Future
+import com.twitter.util.{Await, Future}
 import java.nio.ByteBuffer
 import java.util.{ ArrayList => JArrayList }
 import org.apache.cassandra.finagle.thrift
@@ -49,7 +49,7 @@ class ColumnFamilyTest extends FunSpec with MustMatchers with MockitoSugar with 
 
       val l = new ListBuffer[String]
       val done = cf.columnsIteratee(2, key).foreach { c => l.append(c.name) }
-      done()
+      Await.result(done)
       l must equal(List("dj"))
     }
 
@@ -72,7 +72,7 @@ class ColumnFamilyTest extends FunSpec with MustMatchers with MockitoSugar with 
 
       val l = new ListBuffer[String]
       val done = cf.columnsIteratee(2, key).foreach { c => l.append(c.name) }
-      done()
+      Await.result(done)
       l must equal(List("cat", "name", "radish", "sofa", "xray"))
     }
   }
@@ -97,7 +97,7 @@ class ColumnFamilyTest extends FunSpec with MustMatchers with MockitoSugar with 
         anyConsistencyLevel()))
         .thenReturn(Future.value(new JArrayList[thrift.ColumnOrSuperColumn]()))
 
-      cf.getColumn("key", "name")() must equal(None)
+      Await.result(cf.getColumn("key", "name")) must equal(None)
     }
 
     it("returns a option of a column if it exists") {
@@ -105,7 +105,7 @@ class ColumnFamilyTest extends FunSpec with MustMatchers with MockitoSugar with 
 
       when(client.get_slice(anyByteBuffer, anyColumnParent, anySlicePredicate, anyConsistencyLevel)).thenReturn(Future.value[ColumnList](columns))
 
-      cf.getColumn("key", "name")() must equal(Some(Column("name", "Coda").timestamp(2292L)))
+      Await.result(cf.getColumn("key", "name")) must equal(Some(Column("name", "Coda").timestamp(2292L)))
     }
   }
 
@@ -129,7 +129,7 @@ class ColumnFamilyTest extends FunSpec with MustMatchers with MockitoSugar with 
 
       when(client.get_slice(anyByteBuffer, anyColumnParent, anySlicePredicate, anyConsistencyLevel)).thenReturn(Future.value[ColumnList](columns))
 
-      cf.getRow("key")() must equal(mapAsJavaMap(Map(
+      Await.result(cf.getRow("key")) must equal(mapAsJavaMap(Map(
         "name" -> Column("name", "Coda").timestamp(2292L),
         "age" -> Column("age", "old").timestamp(11919L)
       )))
@@ -172,7 +172,7 @@ class ColumnFamilyTest extends FunSpec with MustMatchers with MockitoSugar with 
 
       when(client.get_slice(anyByteBuffer, anyColumnParent, anySlicePredicate, anyConsistencyLevel)).thenReturn(Future.value[ColumnList](columns))
 
-      cf.getColumns("key", Set("name", "age"))() must equal(mapAsJavaMap(Map(
+      Await.result(cf.getColumns("key", Set("name", "age"))) must equal(mapAsJavaMap(Map(
         "name" -> Column("name", "Coda").timestamp(2292L),
         "age" -> Column("age", "old").timestamp(11919L)
       )))
@@ -202,7 +202,7 @@ class ColumnFamilyTest extends FunSpec with MustMatchers with MockitoSugar with 
 
       when(client.multiget_slice(anyListOf(classOf[ByteBuffer]), anyColumnParent, anySlicePredicate, anyConsistencyLevel)).thenReturn(Future.value[KeyColumnMap](results))
 
-      cf.multigetColumn(Set("key1", "key2"), "name")() must equal(mapAsJavaMap(Map(
+      Await.result(cf.multigetColumn(Set("key1", "key2"), "name")) must equal(mapAsJavaMap(Map(
         "key1" -> Column("name", "Coda").timestamp(2292L),
         "key2" -> Column("name", "Niki").timestamp(422L)
       )))
@@ -216,7 +216,7 @@ class ColumnFamilyTest extends FunSpec with MustMatchers with MockitoSugar with 
 
       when(client.multiget_slice(anyListOf(classOf[ByteBuffer]), anyColumnParent, anySlicePredicate, anyConsistencyLevel)).thenReturn(Future.value[KeyColumnMap](results))
 
-      cf.multigetColumn(Set("key1", "key2"), "name")() must equal(mapAsJavaMap(Map(
+      Await.result(cf.multigetColumn(Set("key1", "key2"), "name")) must equal(mapAsJavaMap(Map(
         "key1" -> Column("name", "Coda").timestamp(2292L)
       )))
     }
@@ -247,7 +247,7 @@ class ColumnFamilyTest extends FunSpec with MustMatchers with MockitoSugar with 
 
       when(client.multiget_slice(anyListOf(classOf[ByteBuffer]), anyColumnParent, anySlicePredicate, anyConsistencyLevel)).thenReturn(Future.value[KeyColumnMap](results))
 
-      cf.multigetColumns(Set("key1", "key2"), Set("name", "age"))() must equal(mapAsJavaMap(Map(
+      Await.result(cf.multigetColumns(Set("key1", "key2"), Set("name", "age"))) must equal(mapAsJavaMap(Map(
         "key1" -> mapAsJavaMap(Map(
           "name" -> Column("name", "Coda").timestamp(2292L),
           "age" -> Column("age", "old").timestamp(11919L)
@@ -273,7 +273,7 @@ class ColumnFamilyTest extends FunSpec with MustMatchers with MockitoSugar with 
 
       when(client.multiget_slice(anyListOf(classOf[ByteBuffer]), anyColumnParent, anySlicePredicate, anyConsistencyLevel)).thenReturn(Future.value[KeyColumnMap](results))
 
-      cf.multigetRows(Set("key1", "key2"), None, None, Order.Normal, 100)() must equal(mapAsJavaMap(Map(
+      Await.result(cf.multigetRows(Set("key1", "key2"), None, None, Order.Normal, 100)) must equal(mapAsJavaMap(Map(
         "key1" -> mapAsJavaMap(Map(
           "name" -> Column("name", "Coda").timestamp(2292L),
           "age" -> Column("age", "old").timestamp(11919L)
@@ -294,7 +294,7 @@ class ColumnFamilyTest extends FunSpec with MustMatchers with MockitoSugar with 
       when(client.get_count(matchEq(b("key1")), anyColumnParent, anySlicePredicate, anyConsistencyLevel)).
         thenReturn(Future.value[java.lang.Integer](2))
 
-      cf.getCount("key1")() must equal(2)
+      Await.result(cf.getCount("key1")) must equal(2)
     }
 
     it("returns counts for a set of rows") {
@@ -305,7 +305,7 @@ class ColumnFamilyTest extends FunSpec with MustMatchers with MockitoSugar with 
       when(client.multiget_count(anyListOf(classOf[ByteBuffer]), anyColumnParent, anySlicePredicate, anyConsistencyLevel)).
         thenReturn(Future.value[CountsMap](results))
 
-      cf.multigetCounts(Set("key1", "key2"))() must equal(mapAsJavaMap(Map(
+      Await.result(cf.multigetCounts(Set("key1", "key2"))) must equal(mapAsJavaMap(Map(
         "key1" -> 2,
         "key2" -> 100)))
     }

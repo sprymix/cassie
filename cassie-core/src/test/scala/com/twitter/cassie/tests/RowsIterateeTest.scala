@@ -16,7 +16,7 @@ package com.twitter.cassie.tests
 
 import com.twitter.cassie.util.ColumnFamilyTestHelper
 import com.twitter.cassie._
-import com.twitter.util.Future
+import com.twitter.util.{Await, Future}
 import java.util.{ List => JList, HashSet => JHashSet, ArrayList => JArrayList }
 import org.apache.cassandra.finagle.thrift
 import org.junit.runner.RunWith
@@ -59,7 +59,7 @@ class RowsIterateeTest extends FunSpec with MustMatchers with MockitoSugar with 
 
     it("doesn't throw an error") {
       val f = iteratee.foreach { case (key, columns) => () }
-      f()
+      Await.result(f)
     }
   }
 
@@ -83,7 +83,7 @@ class RowsIterateeTest extends FunSpec with MustMatchers with MockitoSugar with 
       case (key, columns) =>
         data += ((key, columns))
     }
-    f()
+    Await.result(f)
 
     it("does a buffered iteration over the columns in the rows in the range") {
       data must equal(ListBuffer(
@@ -96,7 +96,7 @@ class RowsIterateeTest extends FunSpec with MustMatchers with MockitoSugar with 
 
     it("requests data using the last key as the start key until the end is detected") {
       val f = iterator.foreach { case (key, columns) => () }
-      f()
+      Await.result(f)
       val cp = new thrift.ColumnParent(cf.name)
       val inOrder = inOrderVerify(client)
       inOrder.verify(client).get_range_slices(matchEq(cp), anySlicePredicate, matchEq(keyRange("start", "end", 5)), anyConsistencyLevel)
@@ -117,7 +117,7 @@ class RowsIterateeTest extends FunSpec with MustMatchers with MockitoSugar with 
       Future.value(seqAsJavaList(List(keySlice(cf, "start3", List(co("name", "value", 1), co("name1", "value1", 2))))))
     )
 
-    val data = cf.rowsIteratee("start", "end", 5, new JHashSet()).map{(k, c) => (k + "foo", c)}()
+    val data = Await.result(cf.rowsIteratee("start", "end", 5, new JHashSet()).map{(k, c) => (k + "foo", c)})
 
     it("it maps over the data") {
       data must equal(ListBuffer(

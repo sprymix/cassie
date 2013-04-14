@@ -101,7 +101,7 @@ class CassieReducer extends Reducer[BytesWritable, ColumnWritable, BytesWritable
   }
 
   private def execute(context: ReducerContext): Unit = try {
-    batch.execute.get()
+    Await.result(batch.execute)
     context.getCounter(CassieCounters.Counters.SUCCESS).increment(1)
   } catch {
     case t: Throwable => {

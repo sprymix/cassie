@@ -20,7 +20,7 @@ import com.twitter.cassie.Column
 import com.twitter.cassie.connection.ClientProvider
 import com.twitter.cassie.{ WriteConsistency, ReadConsistency, Keyspace }
 import com.twitter.finagle.stats.NullStatsReceiver
-import com.twitter.util.Future
+import com.twitter.util.{Await, Future}
 import java.nio.ByteBuffer
 import java.util.{ HashMap, Map => JMap, List => JList, ArrayList => JArrayList }
 import org.apache.cassandra.finagle.thrift
@@ -69,7 +69,7 @@ class KeyspaceTest extends FunSpec with MustMatchers with MockitoSugar with Befo
     }
 
     it("executes empty batch") {
-      keyspace.execute(Seq(), WriteConsistency.One).get()
+      Await.result(keyspace.execute(Seq(), WriteConsistency.One))
     }
 
     it("executes multiple batches") {
@@ -97,7 +97,7 @@ class KeyspaceTest extends FunSpec with MustMatchers with MockitoSugar with Befo
       aBatch.insert("foo", Column("bar", "baz"))
       bBatch.insert("foo", Column("bar", "baz"))
       when(stc.batch_mutate(anyObject(), anyObject())).thenReturn(void);
-      keyspace.execute(Seq(aBatch, bBatch), WriteConsistency.Quorum).get()
+      Await.result(keyspace.execute(Seq(aBatch, bBatch), WriteConsistency.Quorum))
       verify(stc).batch_mutate(expectedMutations, WriteConsistency.Quorum.level)
     }
   }

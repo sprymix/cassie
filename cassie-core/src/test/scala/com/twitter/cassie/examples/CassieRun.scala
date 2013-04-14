@@ -14,6 +14,8 @@
 
 package com.twitter.cassie.tests.examples
 
+import com.twitter.util.Await;
+
 import com.twitter.cassie._
 import com.twitter.cassie.codecs.Utf8Codec
 import com.twitter.cassie.types.LexicalUUID
@@ -36,50 +38,51 @@ object CassieRun {
     val cass = keyspace.columnFamily("Standard1", Utf8Codec, Utf8Codec, Utf8Codec)
 
     log.info("inserting some columns")
-    cass.insert("yay for me", Column("name", "Coda")).apply()
-    cass.insert("yay for me", Column("motto", "Moar lean.")).apply()
+    Await.result(cass.insert("yay for me", Column("name", "Coda")))
+    Await.result(cass.insert("yay for me", Column("motto", "Moar lean.")))
 
-    cass.insert("yay for you", Column("name", "Niki")).apply()
-    cass.insert("yay for you", Column("motto", "Told ya.")).apply()
+    Await.result(cass.insert("yay for you", Column("name", "Niki")))
+    Await.result(cass.insert("yay for you", Column("motto", "Told ya.")))
 
-    cass.insert("yay for us", Column("name", "Biscuit")).apply()
-    cass.insert("yay for us", Column("motto", "Mlalm.")).apply()
+    Await.result(cass.insert("yay for us", Column("name", "Biscuit")))
+    Await.result(cass.insert("yay for us", Column("motto", "Mlalm.")))
 
-    cass.insert("yay for everyone", Column("name", "Louie")).apply()
-    cass.insert("yay for everyone", Column("motto", "Swish!")).apply()
+    Await.result(cass.insert("yay for everyone", Column("name", "Louie")))
+    Await.result(cass.insert("yay for everyone", Column("motto", "Swish!")))
 
-    log.info("getting a column: %s", cass.getColumn("yay for me", "name").apply())
-    log.info("getting a column that doesn't exist: %s", cass.getColumn("yay for no one", "name").apply())
-    log.info("getting a column that doesn't exist #2: %s", cass.getColumn("yay for no one", "oink").apply())
-    log.info("getting a set of columns: %s", cass.getColumns("yay for me", Set("name", "motto")).apply())
-    log.info("getting a whole row: %s", cass.getRow("yay for me").apply())
-    log.info("getting a column from a set of keys: %s", cass.multigetColumn(Set("yay for me", "yay for you"), "name").apply())
-    log.info("getting a set of columns from a set of keys: %s", cass.multigetColumns(Set("yay for me", "yay for you"), Set("name", "motto")).apply())
+    log.info("getting a column: %s", Await.result(cass.getColumn("yay for me", "name")))
+    log.info("getting a column that doesn't exist: %s", Await.result(cass.getColumn("yay for no one", "name")))
+    log.info("getting a column that doesn't exist #2: %s", Await.result(cass.getColumn("yay for no one", "oink")))
+    log.info("getting a set of columns: %s", Await.result(cass.getColumns("yay for me", Set("name", "motto"))))
+    log.info("getting a whole row: %s", Await.result(cass.getRow("yay for me")))
+    log.info("getting a column from a set of keys: %s", Await.result(cass.multigetColumn(Set("yay for me", "yay for you"), "name")))
+    log.info("getting a set of columns from a set of keys: %s", Await.result(cass.multigetColumns(Set("yay for me", "yay for you"), Set("name", "motto"))))
 
     log.info("Iterating!")
     val f = cass.rowsIteratee(2).foreach {
       case (key, cols) =>
         log.info("Found: %s %s", key, cols)
     }
-    f()
+    Await.result(f)
 
     val f2 = cass.columnsIteratee(2, "yay for me").foreach { col =>
       log.info("Found Columns Iteratee: %s", col)
     }
+    Await.result(f2)
 
     log.info("removing a column")
-    cass.removeColumn("yay for me", "motto").apply()
+    Await.result(cass.removeColumn("yay for me", "motto"))
 
     log.info("removing a row")
-    cass.removeRow("yay for me").apply()
+    Await.result(cass.removeRow("yay for me"))
 
     log.info("Batching up some stuff")
-    cass.batch()
+    Await.result(cass.batch()
       .removeColumn("yay for you", "name")
       .removeColumns("yay for us", Set("name", "motto"))
       .insert("yay for nobody", Column("name", "Burt"))
       .insert("yay for nobody", Column("motto", "'S funny."))
-      .execute().apply()
+      .execute())
 
     log.info("Wrappin' up");
     keyspace.close();

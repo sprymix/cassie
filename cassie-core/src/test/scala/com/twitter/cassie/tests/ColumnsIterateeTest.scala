@@ -16,7 +16,7 @@ package com.twitter.cassie.tests
 
 import com.twitter.cassie.util.ColumnFamilyTestHelper
 import com.twitter.cassie._
-import com.twitter.util.Future
+import com.twitter.util.{Await, Future}
 import java.util.{ List => JList, HashSet => JHashSet, ArrayList => JArrayList }
 import org.apache.cassandra.finagle.thrift
 import org.mockito.Matchers.{ eq => matchEq }
@@ -45,7 +45,7 @@ class ColumnsIterateeTest extends FunSpec with MustMatchers with MockitoSugar wi
 
     it("doesn't throw an error") {
       val f = cf.columnsIteratee("foo").foreach { case (column) => () }
-      f()
+      Await.result(f)
     }
   }
 
@@ -76,7 +76,7 @@ class ColumnsIterateeTest extends FunSpec with MustMatchers with MockitoSugar wi
     val f = cf.columnsIteratee(4, "bar").foreach { column =>
       data2 += column
     }
-    f()
+    Await.result(f)
 
     it("does a buffered iteration over the columns in the rows in the range") {
       seqAsJavaList(data2) must equal(columns)
@@ -124,7 +124,7 @@ class ColumnsIterateeTest extends FunSpec with MustMatchers with MockitoSugar wi
     val f = cf.columnsIteratee(1, "bar", Some("third"), None, 2, Order.Reversed).foreach { column =>
       data2 += column
     }
-    f()
+    Await.result(f)
 
     it("does a buffered iteration over the columns in the rows in the range") {
       seqAsJavaList(data2) must equal(expectedColumns)
@@ -173,7 +173,7 @@ class ColumnsIterateeTest extends FunSpec with MustMatchers with MockitoSugar wi
     val f = cf.columnsIteratee(2, "bar", Some("first"), Some("fourth")).foreach { column =>
       data2 += column
     }
-    f()
+    Await.result(f)
 
     it("does a buffered iteration over the columns in the rows in the range") {
       data2 must equal(expectedColumns)
@@ -211,7 +211,7 @@ class ColumnsIterateeTest extends FunSpec with MustMatchers with MockitoSugar wi
       Future.value(seqAsJavaList(List(coscs.get(3))))
     )
 
-    val data = cf.columnsIteratee(4, "bar").map { column => column }.apply
+    val data = Await.result(cf.columnsIteratee(4, "bar").map { column => column })
 
     it("does a buffered iteration over the columns in the rows in the range") {
       seqAsJavaList(data) must equal(columns)

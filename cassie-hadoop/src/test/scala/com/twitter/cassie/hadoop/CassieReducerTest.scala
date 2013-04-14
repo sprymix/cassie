@@ -121,7 +121,7 @@ class CassieReducerTest extends FunSpec with MustMatchers {
         val ks = cluster.mapHostsEvery(0.seconds).keyspace("ks").connect()
         val cf = ks.columnFamily[String, String, String]("cf", Utf8Codec, Utf8Codec, Utf8Codec)
 
-        cf.getRow("0")().get("default").value must equal("hello")
+        Await.result(cf.getRow("0")).get("default").value must equal("hello")
       } finally {
         fake.stop()
       }

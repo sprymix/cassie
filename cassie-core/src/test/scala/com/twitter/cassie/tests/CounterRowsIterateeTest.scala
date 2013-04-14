@@ -16,7 +16,7 @@ package com.twitter.cassie.tests
 
 import com.twitter.cassie.util.ColumnFamilyTestHelper
 import com.twitter.cassie._
-import com.twitter.util.Future
+import com.twitter.util.{Await, Future}
 import java.util.{ List => JList, HashSet => JHashSet, ArrayList => JArrayList }
 import org.apache.cassandra.finagle.thrift
 import org.mockito.Matchers.{ eq => matchEq }
@@ -61,7 +61,7 @@ class CounterRowsIterateeTest extends FunSpec with MustMatchers with MockitoSuga
 
     it("doesn't throw an error") {
       val f = iteratee.foreach { case (key, columns) => () }
-      f()
+      Await.result(f)
     }
   }
 
@@ -85,7 +85,7 @@ class CounterRowsIterateeTest extends FunSpec with MustMatchers with MockitoSuga
       case (key, columns) =>
         data += ((key, columns))
     }
-    f()
+    Await.result(f)
 
     it("does a buffered iteration over the columns in the rows in the range") {
       data must equal(ListBuffer(
@@ -98,7 +98,7 @@ class CounterRowsIterateeTest extends FunSpec with MustMatchers with MockitoSuga
 
     it("requests data using the last key as the start key until the end is detected") {
       val f = iterator.foreach { case (key, columns) => () }
-      f()
+      Await.result(f)
       val cp = new thrift.ColumnParent(cf.name)
       val inOrder = inOrderVerify(client)
       inOrder.verify(client).get_range_slices(matchEq(cp), anySlicePredicate, matchEq(keyRange("start", "end", 5)), anyConsistencyLevel)
@@ -119,7 +119,7 @@ class CounterRowsIterateeTest extends FunSpec with MustMatchers with MockitoSuga
       Future.value(seqAsJavaList(List(keySlice(cf, "start3", List(c("name", "value", 1), c("name1", "value1", 2))))))
     )
 
-    val data = cf.rowsIteratee("start", "end", 5, new JHashSet()).map{ case(key, columns) => (key + "foo", columns)}.apply
+    val data = Await.result(cf.rowsIteratee("start", "end", 5, new JHashSet()).map{ case(key, columns) => (key + "foo", columns)})
 
     it("does a buffered iteration over the columns in the rows in the range") {
       data must equal(ListBuffer(

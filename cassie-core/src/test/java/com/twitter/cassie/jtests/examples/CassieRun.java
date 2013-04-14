@@ -22,6 +22,7 @@ import com.twitter.finagle.stats.NullStatsReceiver$;
 import com.twitter.util.Function2;
 import com.twitter.util.Function;
 import com.twitter.util.Future;
+import com.twitter.util.Await;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -46,26 +47,26 @@ public final class CassieRun {
     ColumnFamily<String, String, String> cass = keyspace.columnFamily("Standard1", Utf8Codec.get(), Utf8Codec.get(), Utf8Codec.get());
 
     info("inserting some columns");
-    //note that these calls are async, the apply() is where the waiting happens
-    cass.insert("yay for me", cass.newColumn("name", "Coda")).apply();
-    cass.insert("yay for me", cass.newColumn("motto", "Moar lean.")).apply();
 
-    cass.insert("yay for you", cass.newColumn("name", "Niki")).apply();
-    cass.insert("yay for you", cass.newColumn("motto", "Told ya.")).apply();
+    Await.result(cass.insert("yay for me", cass.newColumn("name", "Coda")));
+    Await.result(cass.insert("yay for me", cass.newColumn("motto", "Moar lean.")));
 
-    cass.insert("yay for us", cass.newColumn("name", "Biscuit")).apply();
-    cass.insert("yay for us", cass.newColumn("motto", "Mlalm.")).apply();
+    Await.result(cass.insert("yay for you", cass.newColumn("name", "Niki")));
+    Await.result(cass.insert("yay for you", cass.newColumn("motto", "Told ya.")));
 
-    cass.insert("yay for everyone", cass.newColumn("name", "Louie")).apply();
-    cass.insert("yay for everyone", cass.newColumn("motto", "Swish!")).apply();
+    Await.result(cass.insert("yay for us", cass.newColumn("name", "Biscuit")));
+    Await.result(cass.insert("yay for us", cass.newColumn("motto", "Mlalm.")));
 
-    info("getting a column: " + cass.getColumn("yay for me", "name").apply());
-    info("getting a column that doesn't exist: " + cass.getColumn("yay for no one", "name").apply());
-    info("getting a column that doesn't exist #2: " + cass.getColumn("yay for no one", "oink").apply());
-    info("getting a set of columns: " + cass.getColumns("yay for me", Set("name", "motto")).apply());
-    info("getting a whole row: " + cass.getRow("yay for me").apply());
-    info("getting a column from a set of keys: " + cass.multigetColumn(Set("yay for me", "yay for you"), "name").apply());
-    info("getting a set of columns from a set of keys: " + cass.multigetColumns(Set("yay for me", "yay for you"), Set("name", "motto")).apply());
+    Await.result(cass.insert("yay for everyone", cass.newColumn("name", "Louie")));
+    Await.result(cass.insert("yay for everyone", cass.newColumn("motto", "Swish!")));
+
+    info("getting a column: " + Await.result(cass.getColumn("yay for me", "name")));
+    info("getting a column that doesn't exist: " + Await.result(cass.getColumn("yay for no one", "name")));
+    info("getting a column that doesn't exist #2: " + Await.result(cass.getColumn("yay for no one", "oink")));
+    info("getting a set of columns: " + Await.result(cass.getColumns("yay for me", Set("name", "motto"))));
+    info("getting a whole row: " + Await.result(cass.getRow("yay for me")));
+    info("getting a column from a set of keys: " + Await.result(cass.multigetColumn(Set("yay for me", "yay for you"), "name")));
+    info("getting a set of columns from a set of keys: " + Await.result(cass.multigetColumns(Set("yay for me", "yay for you"), Set("name", "motto"))));
 
     info("Iterating!");
     Future f = cass.rowsIteratee(2).foreach(new scala.runtime.AbstractFunction2<String, List<Column<String, String>>, scala.runtime.BoxedUnit>() {
@@ -75,7 +76,7 @@ public final class CassieRun {
       }
     });
 
-    f.apply();
+    Await.result(f);
 
     Future f2 = cass.columnsIteratee(2, "yay for me").foreach(new Function<Column<String, String>, scala.runtime.BoxedUnit>() {
       public scala.runtime.BoxedUnit apply(Column<String,String> column){
@@ -84,21 +85,21 @@ public final class CassieRun {
       }
     });
 
-    f2.apply();
+    Await.result(f2);
 
     info("removing a column");
-    cass.removeColumn("yay for me", "motto").apply();
+    Await.result(cass.removeColumn("yay for me", "motto"));
 
     info("removing a row");
-    cass.removeRow("yay for me").apply();
+    Await.result(cass.removeRow("yay for me"));
 
     info("Batching up some stuff");
-    cass.batch()
+    Await.result(cass.batch()
       .removeColumn("yay for you", "name")
       .removeColumns("yay for us", Set("name", "motto"))
       .insert("yay for nobody", cass.newColumn("name", "Burt"))
       .insert("yay for nobody", cass.newColumn("motto", "'S funny."))
-      .execute().apply();
+      .execute());
 
     info("Wrappin' up");
     keyspace.close();

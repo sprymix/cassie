@@ -17,7 +17,7 @@ package com.twitter.cassie.tests
 import com.twitter.cassie.codecs.Utf8Codec
 import com.twitter.cassie.util.ColumnFamilyTestHelper
 import com.twitter.cassie._
-import com.twitter.util.Future
+import com.twitter.util.{Await, Future}
 import java.nio.ByteBuffer
 import java.util.{ ArrayList => JArrayList }
 import org.apache.cassandra.finagle.thrift
@@ -54,7 +54,7 @@ class CounterColumnFamilyTest extends FunSpec with MustMatchers with MockitoSuga
       when(client.get_slice(anyByteBuffer(), anyColumnParent(), anySlicePredicate(),
         anyConsistencyLevel()))
         .thenReturn(Future.value(new JArrayList[thrift.ColumnOrSuperColumn]()))
-      cf.getColumn("key", "name")() must equal(None)
+      Await.result(cf.getColumn("key", "name")) must equal(None)
     }
 
     it("returns a option of a column if it exists") {
@@ -62,7 +62,7 @@ class CounterColumnFamilyTest extends FunSpec with MustMatchers with MockitoSuga
 
       when(client.get_slice(anyByteBuffer, anyColumnParent, anySlicePredicate, anyConsistencyLevel)).thenReturn(Future.value[ColumnList](columns))
 
-      cf.getColumn("key", "cats")() must equal(Some(CounterColumn("cats", 2L)))
+      Await.result(cf.getColumn("key", "cats")) must equal(Some(CounterColumn("cats", 2L)))
     }
   }
 
@@ -86,7 +86,7 @@ class CounterColumnFamilyTest extends FunSpec with MustMatchers with MockitoSuga
 
       when(client.get_slice(anyByteBuffer, anyColumnParent, anySlicePredicate, anyConsistencyLevel)).thenReturn(Future.value[ColumnList](columns))
 
-      cf.getRow("key")() must equal(mapAsJavaMap(Map(
+      Await.result(cf.getRow("key")) must equal(mapAsJavaMap(Map(
         "cats" -> CounterColumn("cats", 2L),
         "dogs" -> CounterColumn("dogs", 4L)
       )))
@@ -114,7 +114,7 @@ class CounterColumnFamilyTest extends FunSpec with MustMatchers with MockitoSuga
 
       when(client.get_slice(anyByteBuffer, anyColumnParent, anySlicePredicate, anyConsistencyLevel)).thenReturn(Future.value[ColumnList](columns))
 
-      cf.getColumns("key", Set("cats", "dogs"))() must equal(mapAsJavaMap(Map(
+      Await.result(cf.getColumns("key", Set("cats", "dogs"))) must equal(mapAsJavaMap(Map(
         "cats" -> CounterColumn("cats", 2L),
         "dogs" -> CounterColumn("dogs", 3L)
       )))
@@ -144,7 +144,7 @@ class CounterColumnFamilyTest extends FunSpec with MustMatchers with MockitoSuga
 
       when(client.multiget_slice(anyListOf(classOf[ByteBuffer]), anyColumnParent, anySlicePredicate, anyConsistencyLevel)).thenReturn(Future.value[KeyColumnMap](results))
 
-      cf.multigetColumn(Set("us", "jp"), "cats")() must equal(mapAsJavaMap(Map(
+      Await.result(cf.multigetColumn(Set("us", "jp"), "cats")) must equal(mapAsJavaMap(Map(
         "us" -> CounterColumn("cats", 2L),
         "jp" -> CounterColumn("cats", 4L)
       )))
@@ -158,7 +158,7 @@ class CounterColumnFamilyTest extends FunSpec with MustMatchers with MockitoSuga
 
       when(client.multiget_slice(anyListOf(classOf[ByteBuffer]), anyColumnParent, anySlicePredicate, anyConsistencyLevel)).thenReturn(Future.value[KeyColumnMap](results))
 
-      cf.multigetColumn(Set("us", "jp"), "cats")() must equal(mapAsJavaMap(Map(
+      Await.result(cf.multigetColumn(Set("us", "jp"), "cats")) must equal(mapAsJavaMap(Map(
         "us" -> CounterColumn("cats", 2L)
       )))
     }
@@ -189,7 +189,7 @@ class CounterColumnFamilyTest extends FunSpec with MustMatchers with MockitoSuga
 
       when(client.multiget_slice(anyListOf(classOf[ByteBuffer]), anyColumnParent, anySlicePredicate, anyConsistencyLevel)).thenReturn(Future.value[KeyColumnMap](results))
 
-      cf.multigetColumns(Set("us", "jp"), Set("cats", "dogs"))() must equal(mapAsJavaMap(Map(
+      Await.result(cf.multigetColumns(Set("us", "jp"), Set("cats", "dogs"))) must equal(mapAsJavaMap(Map(
         "us" -> mapAsJavaMap(Map(
           "cats" -> CounterColumn("cats", 2L),
           "dogs" -> CounterColumn("dogs", 9L)
@@ -275,7 +275,7 @@ class CounterColumnFamilyTest extends FunSpec with MustMatchers with MockitoSuga
 
       val l = new ListBuffer[String]
       val done = cf.columnsIteratee(2, key).foreach { c => l.append(c.name) }
-      done()
+      Await.result(done)
       l must equal(List("cat", "name", "radish", "sofa", "xray"))
     }
 
@@ -296,7 +296,7 @@ class CounterColumnFamilyTest extends FunSpec with MustMatchers with MockitoSuga
       val pred3 = pred("sofa", "", 3, Order.Normal)
       when(client.get_slice(b(key), cp, pred3, thrift.ConsistencyLevel.QUORUM)).thenReturn(Future.value[ColumnList](columns3))
 
-      val l = cf.columnsIteratee(2, key).map { c => c.name }.apply
+      val l = Await.result(cf.columnsIteratee(2, key).map { c => c.name })
       l must equal(List("cat", "name", "radish", "sofa", "xray"))
     }
   }
