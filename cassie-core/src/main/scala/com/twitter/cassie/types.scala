@@ -1,5 +1,6 @@
 package com.twitter.cassie
 
+import scala.language.implicitConversions
 import types._
 
 /**

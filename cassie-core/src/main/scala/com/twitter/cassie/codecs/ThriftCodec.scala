@@ -14,6 +14,9 @@
 
 package com.twitter.cassie.codecs
 
+import scala.language.implicitConversions
+import scala.language.reflectiveCalls
+
 import org.apache.thrift._
 import org.apache.thrift.protocol._
 import org.apache.thrift.transport._

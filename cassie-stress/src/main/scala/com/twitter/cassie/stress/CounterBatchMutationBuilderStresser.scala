@@ -13,6 +13,8 @@
 // limitations under the License.
 package com.twitter.cassie.stress
 
+import scala.language.postfixOps
+
 import com.twitter.cassie.codecs.{LongCodec, Utf8Codec}
 import com.twitter.cassie._
 import com.twitter.conversions.time._
